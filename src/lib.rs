@@ -24,8 +24,7 @@
 #![deny(missing_docs)]
 
 use metrics::{GaugeValue, Key, NameParts, Recorder, SetRecorderError, Unit};
-use metrics_util::{CompositeKey, DebugValue, Handle, MetricKind, Quantile, Registry, Summary};
-use ordered_float::OrderedFloat;
+use metrics_util::{CompositeKey, Handle, MetricKind, Quantile, Registry, Summary};
 use std::{
     collections::HashMap,
     fmt::Write,
@@ -218,11 +217,13 @@ where
     ) -> String {
         let mut joined = current_snapshot.join(&self.quantiles, previous_snapshot);
         joined.sort_unstable_by(|a, b| a.key().cmp(b.key()));
-        let mut rows: Vec<[String; 5]> = Vec::with_capacity(joined.len());
+        let mut rows: Vec<([String; 5], Option<[String; 2]>)> = Vec::with_capacity(joined.len());
         let mut longest_key: usize = "Key".len();
         let longest_kind: usize = "Histogram".len();
         let mut longest_value: usize = "Value".len();
         let mut longest_delta: usize = "Delta".len();
+        let mut longest_unit: usize = "Units".len();
+        let mut longest_description: usize = "Description".len();
         for entry in joined.into_iter() {
             let key: String = entry.key_str();
             longest_key = longest_key.max(key.len());
@@ -237,11 +238,50 @@ where
                 .map(|label| format!("{} => {}", label.key(), label.value()))
                 .collect();
             let row = [key, kind, value, delta, labels.join(", ")];
-            rows.push(row);
+            if self.print_metadata {
+                let guard = self.metdadata.lock().unwrap();
+                if let Some(metadata) = guard.get(entry.key().name()) {
+                    let unit = metadata
+                        .unit
+                        .as_ref()
+                        .map(|u| u.as_canonical_label().to_string())
+                        .unwrap_or_else(|| "N/A".to_string());
+                    longest_unit = longest_unit.max(unit.len());
+                    let description = metadata
+                        .description
+                        .map(|d| d.to_string())
+                        .unwrap_or_else(|| "N/A".to_string());
+                    longest_description = longest_description.max(description.len());
+                    rows.push((row, Some([unit, description])));
+                } else {
+                    rows.push((row, Some(["N/A".to_string(), "N/A".to_string()])));
+                }
+            } else {
+                rows.push((row, None));
+            }
         }
 
         let mut output = format!("{:=^80}\n\n", " Metrics ");
-        writeln!(
+        if self.print_metadata {
+            writeln!(
+                        &mut output,
+                        "{key:<key_fill$} {kind:<kind_fill$} {value:<value_fill$} {unit:<unit_fill$} 𝚫 {delta:<delta_fill$} | {descr:<descr_fill$} | Labels",
+                        key = "Key",
+                        key_fill = longest_key,
+                        kind = "Kind",
+                        kind_fill = longest_kind,
+                        value = "Value",
+                        value_fill = longest_value,
+                        unit = "Units",
+                        unit_fill = longest_unit,
+                        delta = "Delta",
+                        delta_fill = longest_delta,
+                        descr = "Description",
+                        descr_fill = longest_description,
+                    )
+                    .unwrap();
+        } else {
+            writeln!(
                         &mut output,
                         "{key:<key_fill$} {kind:<kind_fill$} {value:<value_fill$} 𝚫 {delta:<delta_fill$} | Labels",
                         key = "Key",
@@ -254,9 +294,30 @@ where
                         delta_fill = longest_delta
                     )
                     .unwrap();
+        }
         writeln!(&mut output, "{:-^80}", "").unwrap();
-        for row in rows.into_iter() {
-            writeln!(
+        for (row, meta_row_opt) in rows.into_iter() {
+            if let Some(meta_row) = meta_row_opt {
+                writeln!(
+                        &mut output,
+                        "{key:<key_fill$} {kind:<kind_fill$} {value:<value_fill$} {unit:<unit_fill$} 𝚫 {delta:<delta_fill$} | {descr:<descr_fill$} | {labels}",
+                        key = row[0],
+                        key_fill = longest_key,
+                        kind = row[1],
+                        kind_fill = longest_kind,
+                        value = row[2],
+                        value_fill = longest_value,
+                        unit = meta_row[0],
+                        unit_fill = longest_unit,
+                        delta = row[3],
+                        delta_fill = longest_delta,
+                        descr = meta_row[1],
+                        descr_fill = longest_description,
+                        labels = row[4]
+                    )
+                    .unwrap();
+            } else {
+                writeln!(
                         &mut output,
                         "{key:<key_fill$} {kind:<kind_fill$} {value:<value_fill$} 𝚫 {delta:<delta_fill$} | {labels}",
                         key = row[0],
@@ -270,6 +331,7 @@ where
                         labels = row[4]
                     )
                     .unwrap();
+            }
         }
         writeln!(
             &mut output,
@@ -588,11 +650,16 @@ fn ignore<'a, T: 'static>(_t: &'a T) {
 mod tests {
     use super::*;
     use metrics::*;
-    use std::{thread, time::Duration};
+    use std::time::Duration;
 
     #[test]
     fn not_a_real_test() {
-        PrintRecorder::default().install().unwrap();
+        #[allow(unused_mut)]
+        let mut rec = PrintRecorder::default();
+        // uncomment to see units and descriptions
+        //rec.do_print_medata();
+        rec.install().unwrap();
+
         register_counter!("test.counter", "A simple counter in a loop", "test" => "not_a_real_test");
         register_gauge!("test.time_elapsed", Unit::Milliseconds, "The time that elapsed since starting the loop", "test" => "not_a_real_test");
         register_histogram!("test.time_per_iter", Unit::Nanoseconds, "The time that elapsed for every loop", "test" => "not_a_real_test");

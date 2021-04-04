@@ -17,7 +17,6 @@ license = "MIT"
 [dependencies]
 metrics 		= "0.14"
 metrics-util	= "0.6"
-ordered-float	= "2"
 
 [badges]
 # Maintenance: `status` is required Available options are `actively-developed`,
