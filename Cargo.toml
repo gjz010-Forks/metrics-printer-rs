@@ -1,0 +1,26 @@
+[package]
+name = "metrics_printer"
+version = "0.1.0"
+authors = ["Lars Kroll <bathtor@googlemail.com>"]
+edition = "2018"
+description = "A recorder for the metrics library that prints metric values to an output in regular intervals."
+documentation = "https://docs.rs/metrics_printer"
+homepage = "https://github.com/Bathtor/metrics-printer-rs"
+repository = "https://github.com/Bathtor/metrics-printer-rs"
+readme = "README.md"
+keywords = ["metrics", "logging"]
+categories = ["debugging"]
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+metrics 		= "0.14"
+metrics-util	= "0.6"
+ordered-float	= "2"
+
+[badges]
+# Maintenance: `status` is required Available options are `actively-developed`,
+# `passively-maintained`, `as-is`, `none`, `experimental`, `looking-for-maintainer`
+# and `deprecated`.
+maintenance = { status = "passively-maintained" }
