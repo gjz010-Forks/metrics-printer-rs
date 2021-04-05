@@ -9,7 +9,7 @@ homepage = "https://github.com/Bathtor/metrics-printer-rs"
 repository = "https://github.com/Bathtor/metrics-printer-rs"
 readme = "README.md"
 keywords = ["metrics", "logging"]
-categories = ["debugging"]
+categories = ["development-tools::debugging", "logging"]
 license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
