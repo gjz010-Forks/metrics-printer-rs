@@ -1,2 +1,6 @@
 /target
 Cargo.lock
+.devenv
+.direnv
+.pre-commit-config.yaml
+.vscode
