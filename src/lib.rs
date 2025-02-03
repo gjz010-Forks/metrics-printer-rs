@@ -21,22 +21,12 @@
 //! }
 //! ```
 #![deny(missing_docs)]
-use metrics::{GaugeValue, Key, Recorder, SetRecorderError, Unit};
-use metrics_util::{registry::Registry, storage::Summary, CompositeKey, MetricKind, Quantile};
-use std::{
-    collections::HashMap,
-    fmt::Write,
-    iter::FromIterator,
-    sync::{Arc, Mutex},
-    time::{Duration, Instant},
-};
 mod printers;
 mod recorder;
 mod recorder_wrapper;
 mod snapshot;
 pub use printers::{Printer, StderrPrinter, StdoutPrinter};
 pub use recorder::{default_quantiles, PrintRecorder, DEFAULT_PRINT_INTERVAL};
-use recorder_wrapper::PrintRecorderWrapper;
 
 /// Load and install the default recorder
 pub fn init() {
@@ -47,7 +37,7 @@ pub fn init() {
 mod tests {
     use super::*;
     use metrics::*;
-    use std::time::Duration;
+    use std::time::{Duration, Instant};
 
     #[test]
     fn not_a_real_test() {

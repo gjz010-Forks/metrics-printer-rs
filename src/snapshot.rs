@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, collections::HashMap, iter::FromIterator};
+use std::{collections::HashMap, iter::FromIterator};
 
 use metrics::Key;
 use metrics_util::{storage::Summary, CompositeKey, MetricKind, Quantile};
