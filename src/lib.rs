@@ -3,7 +3,7 @@
 //!
 //! It uses a thread to print, so it doesn't interfere with other threads' work directly.
 //!
-//! Custom printing targets (e.g., logging frameworks) can be provided via the simple [crate::Printer]
+//! Custom printing targets (e.g., logging frameworks) can be provided via the simple [Printer]
 //! trait, while default implementations for [stdout](StdoutPrinter) and [stderr](StderrPrinter) are provided.
 //!
 //! # Example
